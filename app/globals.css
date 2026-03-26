@@ -1,9 +1,113 @@
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
-  100% { transform: translateY(0px); }
+/* app/globals.css */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #020617;
+  color: #f1f5f9;
+  font-family: 'Inter', sans-serif;
 }
 
-.animate-float {
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+/* Área do Monstro */
+.boss-section {
+  margin-bottom: 60px;
+  padding: 40px;
+  background: radial-gradient(circle, #1e1b4b 0%, #020617 100%);
+  border-radius: 30px;
+}
+
+.boss-emoji {
+  font-size: 120px;
+  margin-bottom: 20px;
+  display: block;
+  filter: drop-shadow(0 0 30px rgba(239, 68, 68, 0.4));
   animation: float 4s ease-in-out infinite;
+}
+
+/* Barras de Status */
+.bar-container {
+  width: 100%;
+  background: #1e293b;
+  height: 25px;
+  border-radius: 15px;
+  overflow: hidden;
+  position: relative;
+  border: 2px solid #334155;
+}
+
+.hp-bar {
+  background: linear-gradient(90deg, #991b1b, #dc2626);
+  height: 100%;
+  transition: width 0.5s ease-in-out;
+}
+
+.mana-bar {
+  background: linear-gradient(90deg, #1d4ed8, #3b82f6);
+  height: 100%;
+  transition: width 0.5s ease-in-out;
+}
+
+.bar-text {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  top: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px black;
+}
+
+/* Cards dos Jogadores */
+.grid-players {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+
+.player-card {
+  background: #0f172a;
+  padding: 25px;
+  border-radius: 20px;
+  border: 2px solid #1e293b;
+  transition: transform 0.3s;
+}
+
+.player-card.is-me {
+  border-color: #f97316;
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.2);
+  transform: scale(1.05);
+}
+
+/* Botões */
+.btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: filter 0.2s;
+}
+
+.btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.btn-attack { background: #475569; color: white; }
+.btn-skill { background: #2563eb; color: white; }
+.btn-ult { background: #7c3aed; color: white; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
 }
