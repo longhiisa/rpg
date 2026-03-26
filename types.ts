@@ -1,5 +1,11 @@
-// types.ts
 export type ClasseNome = 'Guerreiro' | 'Mago' | 'Arqueiro';
+
+export interface MensagemChat {
+  id: string;
+  autor: string;
+  texto: string;
+  cor: string;
+}
 
 export interface Jogador {
   id: string;
