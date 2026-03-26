@@ -21,47 +21,49 @@ let estado: EstadoJogo = {
 };
 
 app.prepare().then(() => {
-  const httpServer = createServer((req, res) => handle(req, res));
+  const httpServer = createServer((req, res) => {
+    // Log para debug: ver se as requisições do socket estão chegando
+    if (req.url?.includes('socket')) {
+      console.log(`Requisição de socket recebida: ${req.url}`);
+    }
+    handle(req, res);
+  });
 
   const io = new Server(httpServer, {
-    path: '/api/socket', // CAMINHO ESPECÍFICO
+    path: '/api/socket',
     addTrailingSlash: false,
     cors: {
-      origin: "*",
-      methods: ["GET", "POST"]
-    }
+      origin: true, // Reflete a origem da requisição
+      methods: ["GET", "POST"],
+      credentials: true
+    },
+    transports: ['websocket', 'polling'] // Garante compatibilidade
   });
 
   io.on('connection', (socket) => {
-    console.log(`Jogador conectado: ${socket.id}`);
+    console.log(`✅ Jogador conectado: ${socket.id}`);
+    socket.emit('atualizar', estado);
 
     socket.on('entrar', (dados: { nome: string, classe: ClasseNome }) => {
-      if (Object.keys(estado.jogadores).length >= 4) return;
       const config = statusBase[dados.classe];
       estado.jogadores[socket.id] = {
-        id: socket.id,
-        nome: dados.nome,
-        classe: dados.classe,
-        hp: config.hp,
-        maxHp: config.hp,
-        ataque: config.ataque,
-        nivel: 1,
-        xp: 0,
-        foiSuaVez: false
+        id: socket.id, nome: dados.nome, classe: dados.classe,
+        hp: config.hp, maxHp: config.hp, ataque: config.ataque,
+        nivel: 1, xp: 0, foiSuaVez: false
       };
       io.emit('atualizar', estado);
     });
 
     socket.on('atacar', () => {
-      const player = estado.jogadores[socket.id];
-      if (estado.turno === 'SQUAD' && player && !player.foiSuaVez && player.hp > 0) {
-        estado.monstro.hp -= player.ataque;
-        player.foiSuaVez = true;
+      const p = estado.jogadores[socket.id];
+      if (estado.turno === 'SQUAD' && p && !p.foiSuaVez && p.hp > 0) {
+        estado.monstro.hp -= p.ataque;
+        p.foiSuaVez = true;
         if (estado.monstro.hp <= 0) {
           processarVitoria(io);
         } else {
-          const jogadoresVivos = Object.values(estado.jogadores).filter(p => p.hp > 0);
-          if (jogadoresVivos.every(p => p.foiSuaVez)) {
+          const vivos = Object.values(estado.jogadores).filter(j => j.hp > 0);
+          if (vivos.every(j => j.foiSuaVez)) {
             estado.turno = 'MONSTRO';
             io.emit('atualizar', estado);
             setTimeout(() => turnoDoMonstro(io), 1500);
@@ -73,6 +75,7 @@ app.prepare().then(() => {
     });
 
     socket.on('disconnect', () => {
+      console.log(`❌ Jogador saiu: ${socket.id}`);
       delete estado.jogadores[socket.id];
       io.emit('atualizar', estado);
     });
@@ -80,17 +83,17 @@ app.prepare().then(() => {
 
   const PORT = process.env.PORT || 3000;
   httpServer.listen(PORT, () => {
-    console.log(`> Servidor Online na porta ${PORT}`);
+    console.log(`\n🚀 SERVIDOR ONLINE NA PORTA ${PORT}`);
+    console.log(`🔗 Local: http://localhost:${PORT}\n`);
   });
 });
 
 function turnoDoMonstro(io: Server) {
-  const jogadoresVivos = Object.values(estado.jogadores).filter(p => p.hp > 0);
-  if (jogadoresVivos.length > 0) {
-    const alvo = jogadoresVivos[Math.floor(Math.random() * jogadoresVivos.length)];
-    alvo.hp -= estado.monstro.ataque;
-    if (alvo.hp < 0) alvo.hp = 0;
-    io.emit('notificacao', `${estado.monstro.nome} atacou ${alvo.nome}!`);
+  const vivos = Object.values(estado.jogadores).filter(p => p.hp > 0);
+  if (vivos.length > 0) {
+    const alvo = vivos[Math.floor(Math.random() * vivos.length)];
+    alvo.hp = Math.max(0, alvo.hp - estado.monstro.ataque);
+    io.emit('notificacao', `O monstro atacou ${alvo.nome}!`);
   }
   Object.values(estado.jogadores).forEach(p => p.foiSuaVez = false);
   estado.turno = 'SQUAD';
@@ -98,19 +101,18 @@ function turnoDoMonstro(io: Server) {
 }
 
 function processarVitoria(io: Server) {
-  estado.monstro.nivel += 1;
+  estado.monstro.nivel++;
   const nv = estado.monstro.nivel;
   Object.values(estado.jogadores).forEach(p => {
     p.xp += 50;
-    if (p.xp >= 100) { p.nivel++; p.xp = 0; p.maxHp += 25; p.hp = p.maxHp; p.ataque += 10; }
+    if (p.xp >= 100) { p.nivel++; p.xp = 0; p.maxHp += 20; p.hp = p.maxHp; p.ataque += 10; }
     p.foiSuaVez = false;
   });
   estado.monstro = {
     nome: `Monstro Nível ${nv}`,
-    maxHp: 500 + (nv * 100), hp: 500 + (nv * 100),
-    ataque: 40 + (nv * 10), nivel: nv
+    maxHp: 500 + (nv * 80), hp: 500 + (nv * 80),
+    ataque: 40 + (nv * 8), nivel: nv
   };
   estado.turno = 'SQUAD';
   io.emit('atualizar', estado);
-  io.emit('notificacao', 'Vitória! O Squad subiu de nível.');
 }
