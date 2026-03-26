@@ -7,20 +7,24 @@ export interface Jogador {
   classe: ClasseNome;
   hp: number;
   maxHp: number;
+  mana: number;
+  maxMana: number;
   ataque: number;
   nivel: number;
   xp: number;
   foiSuaVez: boolean;
 }
 
+export interface Monstro {
+  nome: string;
+  hp: number;
+  maxHp: number;
+  ataque: number;
+  nivel: number;
+}
+
 export interface EstadoJogo {
   jogadores: Record<string, Jogador>;
-  monstro: {
-    nome: string;
-    hp: number;
-    maxHp: number;
-    ataque: number;
-    nivel: number; // <--- O "culpado" era a falta dessa linha!
-  };
+  monstro: Monstro;
   turno: 'SQUAD' | 'MONSTRO';
 }
