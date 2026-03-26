@@ -19,6 +19,7 @@ export interface Jogador {
   nivel: number;
   xp: number;
   foiSuaVez: boolean;
+  estaDefendendo: boolean; // NOVA MECÂNICA
 }
 
 export interface Monstro {
